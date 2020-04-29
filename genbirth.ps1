@@ -59,7 +59,7 @@ catch {
 
 
 Write-Host "Installing BoxStarter..."  -ForegroundColor Yellow
-. { iwr -useb https://boxstarter.org/bootstrapper.ps1 } | iex; Get-Boxstarter -Force
+. { Invoke-WebRequest -useb https://boxstarter.org/bootstrapper.ps1 } | Invoke-Expression; Get-Boxstarter -Force
 
 
 Write-Host "Changing Explorer behaviour"  -ForegroundColor Yellow
@@ -105,7 +105,7 @@ Try {
 
 
 Write-Host "Re-checking chocolatey..."  -ForegroundColor Yellow
-Set-ExecutionPolicy Bypass -Scope CurrentUser -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+Set-ExecutionPolicy Bypass -Scope CurrentUser -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 
 
 Write-Host "Installing choco packages..."  -ForegroundColor Yellow
@@ -143,13 +143,13 @@ Compact.exe /CompactOS:always
 
 
 Write-Host "Removing stuff..."  -ForegroundColor Yellow
-gci C:\Users\Public\Desktop | Remove-Item
-gci C:\Users\joeuser\Desktop | Remove-item
+Get-ChildItem C:\Users\Public\Desktop | Remove-Item
+Get-ChildItem C:\Users\joeuser\Desktop | Remove-item
 Clear-RecycleBin -Force
 
 
 Write-Host "Pulling and prepping for debloat...."  -ForegroundColor Yellow
-iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/Sycnex/Windows10Debloater/master/Windows10SysPrepDebloater.ps1'))
+Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/Sycnex/Windows10Debloater/master/Windows10SysPrepDebloater.ps1'))
 
 
 Write-Host "Restarting..."  -ForegroundColor Yellow
