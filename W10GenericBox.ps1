@@ -77,7 +77,7 @@ New-ItemProperty -Path $thisPCIconRegPath -Name $thisPCRegValname -Value 0 -Prop
 
 Write-Host "***Creating standard DIR's..."  -ForegroundColor Green
 try {
-    New-Item -Path $UserDirs -ItemType "Directory" -ErrorAction Stop
+    New-Item -Path $UserDirs -ItemType "Directory" -ErrorAction Stop | Out-Null
         }
 catch {
     Write-Warning -Message "ERROR: Directories already exist ----> Skipping.";
@@ -126,7 +126,7 @@ Set-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\
 
 Write-Host "***Changing Taskbar behaviour"  -ForegroundColor Green
 # will expand explorer to the actual folder you're in
-Set-TaskbarOptions -Size Small -Lock -Dock Bottom -Combine Always -AlwaysShowIconsOn
+Set-TaskbarOptions -Size Small -Lock -Dock Bottom -Combine Always
 
 Write-Host "***Setting wallpaper...." -ForegroundColor Green
 (New-Object System.Net.WebClient).DownloadFile('https://git.io/JfYWM','c:\tools\scripts\Set-Wallpaper.ps1')
@@ -144,7 +144,7 @@ Write-Host "***Showing hidden files and such..."  -ForegroundColor Green
 Set-WindowsExplorerOptions -EnableShowHiddenFilesFoldersDrives -EnableShowProtectedOSFiles -EnableShowFileExtensions
 
 Write-Host "***Prepping for WSL..."  -ForegroundColor Green
-, 'n' * 1  | powershell "Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux" | out-  
+, 'n' * 1  | powershell "Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux" | Out-Null 
 cinst -y Microsoft-Windows-Subsystem-Linux --source="'windowsfeatures'"
 RefreshEnv
 
