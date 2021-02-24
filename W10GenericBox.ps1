@@ -14,8 +14,8 @@ $ScriptName = 'W10GenericBox.ps1'
 $ScriptPath = $MyInvocation.MyCommand.Path
 $CurrentUser = ($env:UserName)
 $CurrentHostname = ($env:ComputerName)
-$UserDirs = 'c:\apps', 'c:\tools\scripts', 'c:\tmp'
-$DefenderExcludeDirs = 'c:\tmp'
+$UserDirs = 'c:\apps', 'c:\tools\scripts', 'c:\tmp','d:\hyperv','d:\wsl'
+$DefenderExcludeDirs = 'c:\tmp','d:\hyperv','d:\wsl'
 
 #$ScriptLocation = Split-Path $ScriptPath
 #$PSScriptRoot # - NOTUSED // the directory where the script exists, not the target directory the script is running in
@@ -82,11 +82,22 @@ catch {
     Write-Warning -Message "ERROR: Directories already exist ----> Skipping.";
     }
 
+
+Write-Host "***Installing containers..."  -ForegroundColor Green
+Enable-WindowsOptionalFeature -Online -FeatureName containers –All
+Write-Host "***Installing hyper-v..."  -ForegroundColor Green
+Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V –All
+Write-Host "***Installing sandbox..."  -ForegroundColor Green
+Enable-WindowsOptionalFeature -FeatureName "Containers-DisposableClientVM" -All -Online
+
 Write-Host "***Installing BoxStarter..."  -ForegroundColor Green
 . { Invoke-WebRequest -useb https://boxstarter.org/bootstrapper.ps1 } | Invoke-Expression; Get-Boxstarter -Force | Out-Null 
 
 Write-Host "***Re-checking chocolatey..."  -ForegroundColor Green
 Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1')) | Out-Null 
+
+Write-Host "***Installing scoop..."  -ForegroundColor Green
+iwr -useb get.scoop.sh | iex
 
 Write-Host "***Installing choco packages..."  -ForegroundColor Green
 
@@ -114,7 +125,18 @@ cinst winscp.portable -y | Out-Null
 Write-Host "*** winscp installed..."  -ForegroundColor Green
 cinst treesizefree -y | Out-Null 
 Write-Host "*** treesizefree installed..."  -ForegroundColor Green
-##cinst microsoft-windows-terminal -y | Out-Null // broken atm
+cinst microsoft-windows-terminal -y | Out-Null
+Write-Host "*** windows terminal installed..."  -ForegroundColor Green
+cinst docker-desktop -y | Out-Null
+Write-Host "*** docker desktop installed..."  -ForegroundColor Green
+cinst duck -y | Out-Null
+Write-Host "*** duck installed..."  -ForegroundColor Green
+cinst vagrant -y | Out-Null
+Write-Host "*** vagrant installed..."  -ForegroundColor Green
+cinst packer -y | Out-Null
+Write-Host "*** packer installed..."  -ForegroundColor Green
+cinst windows-admin-center
+Write-Host "*** wac installed..."  -ForegroundColor Green
 
 Write-Host "***Changing Explorer behaviour"  -ForegroundColor Green
 # will expand explorer to the actual folder you're in
@@ -149,10 +171,10 @@ Write-Host "***Showing hidden files and such..."  -ForegroundColor Green
 # Show hidden files, Show protected OS files, Show file extensions
 Set-WindowsExplorerOptions -EnableShowHiddenFilesFoldersDrives -EnableShowProtectedOSFiles -EnableShowFileExtensions
 
-Write-Host "***Excluding C:\tmp from WinDefender..."  -ForegroundColor Green
+Write-Host "***Excluding dirs from WinDefender..."  -ForegroundColor Green
 Add-MpPreference -ExclusionPath $DefenderExcludeDirs
 
-Write-Host "***Setting Network to Private"  -ForegroundColor Green
+Write-Host "***Setting Networks to Private"  -ForegroundColor Green
 try {
 Get-NetConnectionProfile | Where-Object {$_.NetworkCategory -eq "Public"} | Set-NetConnectionProfile -NetworkCategory Private
 }
@@ -167,6 +189,14 @@ Write-Host "***Enabling RDP and Firewall ports for RDP..."  -ForegroundColor Gre
 Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -value 0
 Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
 
+
+Write-Host "***Installing OpenSSH Server..."  -ForegroundColor Green
+Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0
+Start-Service sshd
+Set-Service -Name sshd -StartupType 'Automatic'
+Get-NetFirewallRule -Name *ssh*
+New-NetFirewallRule -Name sshd -DisplayName 'OpenSSH Server (sshd)' -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 22
+
 Write-Host "***Disabling visual animations and effects..."  -ForegroundColor Green
 $path = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects'
 try {
@@ -180,12 +210,18 @@ catch {
     }
 
 Write-Host "***Prepping for WSL..."  -ForegroundColor Green
-, 'n' * 1  | powershell "Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux" | Out-Null 
-cinst -y Microsoft-Windows-Subsystem-Linux --source="'windowsfeatures'" | Out-Null 
+dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
+dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
+Invoke-WebRequest -Uri https://wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi -OutFile wsl_update_x64.msi -UseBasicParsing
 RefreshEnv
+wsl --set-default-version 2
+Write-Host "***Downloading WSL distros..."  -ForegroundColor Green
+cd d:\wsl
+Invoke-WebRequest -Uri https://aka.ms/wslubuntu2004 -OutFile Ubuntu2004.appx -UseBasicParsing
+move .\Ubuntu2004.appx .\Ubuntu2004.zip
+Expand-Archive .\Ubuntu2004.zip
+d:\wsl\Ubuntu2004\ubuntu2004.exe
 
-Write-Host "***Disabling hibernation...."  -ForegroundColor Green
-powercfg /h off
 
 Write-Host "***Setting a High Performance power plan...."  -ForegroundColor Green
 Try {
