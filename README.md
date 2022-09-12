@@ -20,5 +20,3 @@ Use at your own risk, do your due diligence etc.
 * Preps for WSL.
 * Removes some unnecessary stuff via DISM and compacts the OS so that Windows runs even slower. (but you're running this on pure NVME goodness, right?)
 * Leaves the heavy lifting to other scripts which are written by people who know their shit.
-
-/ka
